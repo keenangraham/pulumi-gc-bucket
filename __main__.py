@@ -1,10 +1,17 @@
-"""A Google Cloud Python Pulumi program"""
-
 import pulumi
+
+
 from pulumi_gcp import storage
 
-# Create a GCP resource (Storage Bucket)
-bucket = storage.Bucket('my-bucket', location="US")
 
-# Export the DNS name of the bucket
+bucket = storage.Bucket(
+    'test-pulumi-bucket',
+    location='US-WEST1',
+    force_destroy=True,
+    soft_delete_policy={
+        'retention_duration_seconds': 0,
+    }
+)
+
+
 pulumi.export('bucket_name', bucket.url)
