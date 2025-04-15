@@ -81,10 +81,18 @@ compute_service_account = Account(
 )
 
 
+compute_object_user = BucketIAMMember(
+    'compute-object-user',
+    bucket=bucket.name,
+    role='roles/storage.objectUser',
+    member=Output.concat("serviceAccount:", compute_service_account.email),
+)
+
+
 compute_bucket_reader = BucketIAMMember(
     'compute-bucket-reader',
     bucket=bucket.name,
-    role='roles/storage.objectCreator',
+    role='roles/storage.bucketReader',
     member=Output.concat("serviceAccount:", compute_service_account.email),
 )
 
