@@ -38,6 +38,8 @@ RUN chown -R igvf:igvf $VIRTUAL_ENV
 
 WORKDIR /igvf
 
+RUN chown -R igvf:igvf /igvf
+
 COPY --chown=igvf:igvf requirements.txt .
 
 RUN pip install -r requirements.txt
