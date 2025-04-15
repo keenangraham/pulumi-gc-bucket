@@ -81,6 +81,14 @@ compute_service_account = Account(
 )
 
 
+compute_bucket_reader = BucketIAMMember(
+    'compute-bucket-reader',
+    bucket=bucket.name,
+    role='roles/storage.objectViewer',
+    member=Output.concat("serviceAccount:", compute_service_account.email),
+)
+
+
 image_pull_permission = RepositoryIamMember(
     'image-pull-permission',
     repository=docker_registry.id,
