@@ -69,7 +69,7 @@ image = Image(
         'dockerfile':'./docker/python/Dockerfile',
         'platform': 'linux/amd64',
     },
-    image_name=repo_url.apply(lambda url: f'{url}/custom-python312:v0.0.3'),
+    image_name=repo_url.apply(lambda url: f'{url}/custom-python312:v0.0.5'),
     registry={
         'server': repo_url.apply(lambda url: f'{url}'),
     },
@@ -151,3 +151,4 @@ export('storage_transfer_service_account_email', storage_transfer_service_accoun
 export('storage_transfer_service_account_subject_id', storage_transfer_service_account.subject_id)
 export('docker_registry_id', docker_registry.id)
 export("imageName", image.base_image_name)
+export('compute_service_account_email', compute_service_account.email)
