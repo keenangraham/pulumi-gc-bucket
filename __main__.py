@@ -69,7 +69,7 @@ image = Image(
         'dockerfile':'./docker/python/Dockerfile',
         'platform': 'linux/amd64',
     },
-    image_name=repo_url.apply(lambda url: f'{url}/custom-python312:v0.0.5'),
+    image_name=repo_url.apply(lambda url: f'{url}/custom-python312:v0.0.6'),
     registry={
         'server': repo_url.apply(lambda url: f'{url}'),
     },
@@ -84,7 +84,7 @@ compute_service_account = Account(
 compute_bucket_reader = BucketIAMMember(
     'compute-bucket-reader',
     bucket=bucket.name,
-    role='roles/storage.objectViewer',
+    role='roles/storage.objectCreator',
     member=Output.concat("serviceAccount:", compute_service_account.email),
 )
 
@@ -134,7 +134,8 @@ compute_instance = Instance(
     resource_name='test-vm-with-container',
     boot_disk={
         'initialize_params': {
-            'image': 'projects/cos-cloud/global/images/cos-stable-117-18613-164-98'
+            'image': 'projects/cos-cloud/global/images/cos-stable-117-18613-164-98',
+            'size': 32,
         }
     },
     machine_type='e2-medium',
@@ -151,7 +152,8 @@ compute_instance = Instance(
     service_account={
         'email': compute_service_account.email,
         'scopes': ['cloud-platform'],
-    }
+    },
+    allow_stopping_for_update=True,
 )
 
 export('bucket_name', bucket.url)
