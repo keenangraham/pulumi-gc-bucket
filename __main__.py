@@ -69,7 +69,7 @@ image = Image(
         'dockerfile':'./docker/python/Dockerfile',
         'platform': 'linux/amd64',
     },
-    image_name=repo_url.apply(lambda url: f'{url}/custom-python312:v0.0.6'),
+    image_name=repo_url.apply(lambda url: f'{url}/custom-python312:v0.0.7'),
     registry={
         'server': repo_url.apply(lambda url: f'{url}'),
     },
