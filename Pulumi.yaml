@@ -9,3 +9,5 @@ config:
   pulumi:tags:
     value:
       pulumi:template: gcp-python
+backend:
+  url: gs://pulumi-state-encode-dcc-1016

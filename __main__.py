@@ -138,7 +138,7 @@ compute_instance = Instance(
             'size': 32,
         }
     },
-    machine_type='e2-medium',
+    machine_type='n2-standard-4',
     zone='us-west1-a',
     network_interfaces=[
         {
