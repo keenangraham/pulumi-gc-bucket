@@ -3,6 +3,7 @@ import json
 from pulumi import Output
 from pulumi import export
 from pulumi import Config
+from pulumi import runtime
 
 from pulumi_docker import Image
 
@@ -19,6 +20,12 @@ from pulumi_gcp.serviceaccount import Account
 from pulumi_gcp.compute import Instance
 
 from pulumi_gcp.secretmanager import SecretVersion
+
+from pulumi_aws.iam import User
+from pulumi_aws.iam import AccessKey
+
+from pulumi_aws.secretsmanager import Secret
+from pulumi_aws.secretsmanager import SecretVersion as AwsSecretVersion
 
 
 storage_transfer_service_account = get_transfer_project_service_account()
@@ -138,7 +145,7 @@ compute_instance = Instance(
             'size': 32,
         }
     },
-    machine_type='n2-standard-4',
+    machine_type='n2-standard-2',
     zone='us-west1-a',
     network_interfaces=[
         {
@@ -156,9 +163,42 @@ compute_instance = Instance(
     allow_stopping_for_update=True,
 )
 
+
+aws_user = User(
+    'aws-user',
+    name='test-pulumi-user',
+)
+
+
+aws_access_key = AccessKey(
+    'aws-access-key',
+    user=aws_user.name,
+)
+
+
+aws_secret = Secret(
+    'aws-secret',
+    name='test-pulumi-user-access-keys',
+)
+
+
+aws_secret_version = AwsSecretVersion(
+    'aws-secret-version',
+    secret_id=aws_secret.id,
+    secret_string=Output.all(
+        aws_access_key.id,
+        aws_access_key.secret
+    ).apply(lambda args: f'{{"ACCESS_KEY":"{args[0]}","SECRET_ACCESS_KEY":"{args[1]}"}}')
+)
+
+
 export('bucket_name', bucket.url)
 export('storage_transfer_service_account_email', storage_transfer_service_account.email)
 export('storage_transfer_service_account_subject_id', storage_transfer_service_account.subject_id)
 export('docker_registry_id', docker_registry.id)
 export("imageName", image.base_image_name)
 export('compute_service_account_email', compute_service_account.email)
+export('aws_user_name', aws_user.name)
+export('aws_user_name', aws_user.arn)
+export('aws_access_key_id', aws_access_key.id)
+export('aws_secret_arn', aws_secret.arn)

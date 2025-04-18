@@ -1,3 +1,4 @@
 encryptionsalt: v1:sqc7TyBvies=:v1:T60m+Kse1w1rUcuS:X/p4KJdQLI+N6OTI6t1twhpHuxm9mw==
 config:
   gcp:project: encode-dcc-1016
+  aws:profile: default
