@@ -23,6 +23,8 @@ from pulumi_gcp.secretmanager import SecretVersion
 
 from pulumi_aws.iam import User
 from pulumi_aws.iam import AccessKey
+from pulumi_aws.iam import Policy
+from pulumi_aws.iam import UserPolicyAttachment
 
 from pulumi_aws.secretsmanager import Secret
 from pulumi_aws.secretsmanager import SecretVersion as AwsSecretVersion
@@ -111,9 +113,71 @@ test_secret = SecretVersion.get(
 )
 
 
+aws_user = User(
+    'aws-user',
+    name='test-pulumi-user',
+)
+
+
+aws_access_key = AccessKey(
+    'aws-access-key',
+    user=aws_user.name,
+)
+
+
+aws_secret = Secret(
+    'aws-secret',
+    name='test-pulumi-user-access-keys',
+)
+
+
+aws_secret_version = AwsSecretVersion(
+    'aws-secret-version',
+    secret_id=aws_secret.id,
+    secret_string=Output.all(
+        aws_access_key.id,
+        aws_access_key.secret
+    ).apply(lambda args: f'{{"ACCESS_KEY":"{args[0]}","SECRET_ACCESS_KEY":"{args[1]}"}}')
+)
+
+
+aws_bucket_name = 'hic-files-transfer'
+
+
+aws_s3_read_policy = Policy(
+    'aws-s3-read-policy',
+    policy=Output.json_dumps(
+        {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": [
+                        "s3:GetObject",
+                        "s3:ListBucket"
+                    ],
+                    "Resource": [
+                        f"arn:aws:s3:::{aws_bucket_name}",
+                        f"arn:aws:s3:::{aws_bucket_name}/*"
+                    ]
+                }
+            ]
+        }
+    )
+)
+
+
+aws_user_policy_attachment = UserPolicyAttachment(
+    'aws-user-policy-attachment',
+    user=aws_user.name,
+    policy_arn=aws_s3_read_policy.arn
+)
+
+
 container_def = Output.all(
     image=image.base_image_name,
-    secret_value=test_secret.secret_data
+    secret_value=test_secret.secret_data,
+    aws_secret_value=aws_secret_version.secret_string,
 ).apply(
     lambda args: json.dumps({
         "spec": {
@@ -126,6 +190,8 @@ container_def = Output.all(
                         {"name": "IMAGENAME", "value": args['image']},
                         {"name": "a", "value": json.loads(args['secret_value'])['a']},
                         {"name": "b", "value": json.loads(args['secret_value'])['secret']},
+                        {"name": "AWS_ACCESS_KEY_ID", "value": json.loads(args['aws_secret_value'])['ACCESS_KEY']},
+                        {"name": "AWS_SECRET_ACCESS_KEY", "value": json.loads(args['aws_secret_value'])['SECRET_ACCESS_KEY']},
                     ],
                     "stdin": True,
                     "tty": True
@@ -163,33 +229,6 @@ compute_instance = Instance(
     allow_stopping_for_update=True,
 )
 
-
-aws_user = User(
-    'aws-user',
-    name='test-pulumi-user',
-)
-
-
-aws_access_key = AccessKey(
-    'aws-access-key',
-    user=aws_user.name,
-)
-
-
-aws_secret = Secret(
-    'aws-secret',
-    name='test-pulumi-user-access-keys',
-)
-
-
-aws_secret_version = AwsSecretVersion(
-    'aws-secret-version',
-    secret_id=aws_secret.id,
-    secret_string=Output.all(
-        aws_access_key.id,
-        aws_access_key.secret
-    ).apply(lambda args: f'{{"ACCESS_KEY":"{args[0]}","SECRET_ACCESS_KEY":"{args[1]}"}}')
-)
 
 
 export('bucket_name', bucket.url)
