@@ -21,6 +21,8 @@ from pulumi_gcp.compute import Instance
 
 from pulumi_gcp.secretmanager import SecretVersion
 
+from pulumi_gcp.projects import IAMMember
+
 from pulumi_aws.iam import User
 from pulumi_aws.iam import AccessKey
 from pulumi_aws.iam import Policy
@@ -95,6 +97,14 @@ compute_storage_admin = BucketIAMMember(
     bucket=bucket.name,
     role='roles/storage.admin',
     member=Output.concat("serviceAccount:", compute_service_account.email),
+)
+
+
+storage_transfer_admin_binding = IAMMember(
+    "compute-sa-storage-transfer-admin",
+    project=gc_project,
+    role="roles/storagetransfer.admin",
+    member=compute_service_account.email.apply(lambda email: f'serviceAccount:{email}')
 )
 
 
