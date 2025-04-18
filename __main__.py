@@ -56,6 +56,16 @@ member = BucketIAMMember(
 )
 
 
+storage_transfer_iam_binding = BucketIAMMember(
+    'storage-transfer-service-account-access',
+    bucket=bucket.name,
+    role='roles/storage.legacyBucketWriter',
+    member=Output.all(sa_email=storage_transfer_service_account.email).apply(
+        lambda args: f'serviceAccount:{args["sa_email"]}'
+    )
+)
+
+
 docker_registry = Repository(
     'test-repo-pulumi',
     location='us-west1',
