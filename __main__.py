@@ -65,7 +65,6 @@ storage_transfer_iam_binding = BucketIAMMember(
     )
 )
 
-
 docker_registry = Repository(
     'test-repo-pulumi',
     location='us-west1',
@@ -106,6 +105,14 @@ compute_storage_admin = BucketIAMMember(
     'compute-storage-admin',
     bucket=bucket.name,
     role='roles/storage.admin',
+    member=Output.concat("serviceAccount:", compute_service_account.email),
+)
+
+
+service_usage_binding = IAMMember(
+    "compute-service-usage-binding",
+    project=gc_project,
+    role='roles/serviceusage.serviceUsageConsumer',
     member=Output.concat("serviceAccount:", compute_service_account.email),
 )
 
@@ -213,8 +220,22 @@ container_def = Output.all(
                         {"name": "AWS_ACCESS_KEY_ID", "value": json.loads(args['aws_secret_value'])['ACCESS_KEY']},
                         {"name": "AWS_SECRET_ACCESS_KEY", "value": json.loads(args['aws_secret_value'])['SECRET_ACCESS_KEY']},
                     ],
+                    "volumeMounts": [
+                        {
+                            "name": "data-volume",
+                            "mountPath": "/igvf/data"
+                        }
+                    ],
                     "stdin": True,
                     "tty": True
+                }
+            ],
+            "volumes": [
+                {
+                    "name": "data-volume",
+                    "hostPath": {
+                        "path": "/mnt/stateful_partition/container_data"
+                    }
                 }
             ],
             "restartPolicy": "Always"
@@ -240,11 +261,12 @@ compute_instance = Instance(
         }
     ],
     metadata={
-        'gce-container-declaration': container_def
+        'gce-container-declaration': container_def,
+        'startup-script': 'mkdir -p /mnt/stateful_partition/container_data && chmod 777 /mnt/stateful_partition/container_data'
     },
     service_account={
         'email': compute_service_account.email,
-        'scopes': ['cloud-platform'],
+        'scopes': ['cloud-platform', 'email', 'profile', 'openid'],
     },
     allow_stopping_for_update=True,
 )
